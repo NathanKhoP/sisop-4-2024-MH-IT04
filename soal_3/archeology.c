@@ -17,6 +17,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+
 // constants
 static const char *dirpath = "/home/etern1ty/sisop_works/modul_4/soal_3/relics";
 const int MAX_PATH = 1024;
@@ -78,7 +79,7 @@ static int artifact_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         st.st_ino = de->d_ino;
         st.st_mode = de->d_type << 12;
 
-        if (strstr(de->d_name, ".000") != NULL) continue; // skips if it isnt a file's part
+        if (strstr(de->d_name, ".000") == NULL) continue; // skips if it isnt a file's part
 
         char relic[MAX_PATH];
         strcpy(relic, de->d_name);
@@ -264,18 +265,6 @@ static int artifact_truncate(const char *path, off_t size) { // writing and read
     return 0;
 }
 
-static int artifact_utimens(const char *path, const struct timespec ts[2]) {
-    int res;
-    char fpath[MAX_PATH];
-    sprintf(fpath, "%s%s", dirpath, path); // full path
-
-    // ignore time
-    res = utime(fpath, NULL);
-    if (res == -1) return -errno;
-
-    return 0;
-}
-
 // fuse's lib
 static struct fuse_operations artifact_oper = {
     .getattr = artifact_getattr,
@@ -285,7 +274,6 @@ static struct fuse_operations artifact_oper = {
     .unlink = artifact_unlink,
     .create = artifact_create,
     .truncate = artifact_truncate,
-    .utimens = artifact_utimens,
 };
 
 int main(int argc, char *argv[]) {
