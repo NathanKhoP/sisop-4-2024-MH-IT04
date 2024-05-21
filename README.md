@@ -49,6 +49,7 @@ Seorang arkeolog menemukan sebuah gua yang didalamnya tersimpan banyak relik dar
 ### Catatan
 
 Directory tree:
+```
 .
 ├── fuse_dir
 ├── relics
@@ -57,6 +58,7 @@ Directory tree:
 │   ├── ...
 │   └── relic_9.png.010
 └── report
+```
 
 [nama_bebas] = fuse_dir
 
@@ -79,12 +81,20 @@ Untuk [nama_bebas], saya memakai fuse_dir sebagai nama folder.
 > b. Direktori [nama_bebas] adalah direktori FUSE dengan direktori asalnya adalah direktori relics. Ketentuan Direktori [nama_bebas] adalah sebagai berikut:
 >> Ketika dilakukan listing, isi dari direktori [nama_bebas] adalah semua relic dari relics yang telah tergabung.
 
+-
+
 >> Ketika dilakukan copy (dari direktori [nama_bebas] ke tujuan manapun), file yang disalin adalah file dari direktori relics yang sudah tergabung.
+
+-
 
 >> Ketika ada file dibuat, maka pada direktori asal (direktori relics) file tersebut akan dipecah menjadi sejumlah pecahan dengan ukuran maksimum tiap pecahan adalah 10kb.
 
+-
+
 >> File yang dipecah akan memiliki nama [namafile].000 dan seterusnya sesuai dengan jumlah pecahannya.
 Ketika dilakukan penghapusan, maka semua pecahannya juga ikut terhapus.
+
+-
 
 > c. Direktori report adalah direktori yang akan dibagikan menggunakan Samba File Server. Setelah kalian berhasil membuat direktori [nama_bebas], jalankan FUSE dan salin semua isi direktori [nama_bebas] pada direktori report
 
