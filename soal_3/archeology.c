@@ -17,7 +17,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-
 // constants
 static const char *dirpath = "/home/etern1ty/sisop_works/modul_4/soal_3/relics";
 const int MAX_PATH = 1024;
