@@ -246,59 +246,11 @@ static int artifact_read(const char *path, char *buf, size_t size, off_t offset,
 
 Untuk read,
 
-**truncate**
-
-```c
-static int artifact_truncate(const char *path, off_t size) { // writing and reading needs truncation
-    char fpath[MAX_PATH];
-    sprintf(fpath, "%s%s", dirpath, path); // full path
-
-    // truncating variables
-    int cur_part = 0;
-    char part[MAX_PATH];
-    off_t size_remain = size;
-
-    while (size_remain > 0) {
-        #ifdef DEBUG
-        printf("truncate: [%s][%d]\n", path, cur_part);
-        #endif
-
-        sprintf(part, "%s.%03d", fpath, cur_part++); // looping through parts
-        size_t part_size;
-        // find size
-        if (size_remain > PART_SIZE) part_size = PART_SIZE;
-        else part_size = size_remain;
-
-        int res = truncate(part, part_size); // truncate file
-        if (res == -1) return -errno;
-
-        size_remain -= part_size; // decrease remaining size
-    }
-    while (1) {
-        #ifdef DEBUG
-        printf("truncate - unlink: [%s][%d]\n", path, cur_part);
-        #endif
-
-        sprintf(part, "%s.%03d", fpath, cur_part++); // looping through parts
-        int res = unlink(part); // unlink file
-        if (res == -1) {
-            if (errno == ENOENT) break;
-            else return -errno;
-        }
-    }
-    return 0;
-}
-```
-
-Untuk truncate
-
 >> Ketika ada file dibuat, maka pada direktori asal (direktori relics) file tersebut akan dipecah menjadi sejumlah pecahan dengan ukuran maksimum tiap pecahan adalah 10kb.
 
 Jika ada file baru yang di cp, dan kita memecahnya dengan ukuran max 10kb, kita memerlukan fungsi baru, yaitu:
 - write
 - create
-  
-Truncate sudah dibuat untuk read tetapi diperlukan juga untuk write.
 
 **write**
 
