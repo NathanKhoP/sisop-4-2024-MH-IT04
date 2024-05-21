@@ -280,3 +280,17 @@ int main(int argc, char *argv[]) {
     umask(0);
     return fuse_main(argc, argv, &artifact_oper, NULL);
 }
+
+// Point 3
+// Samba conf:
+// [<>]
+//     comment = Report - Soal 4 Modul 3 Sisop
+//     path = /home/etern1ty/sisop_works/modul_4/soal_3/report
+//     read only = yes
+//     browsable = yes
+//     writable = no
+//     guest ok = yes
+
+// How to connect: smb://10.4.66.198/<>
+// ex: smb://10.4.66.198/mod4soal3
+// username: etern1ty, password: a
