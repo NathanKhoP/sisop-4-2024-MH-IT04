@@ -291,6 +291,6 @@ int main(int argc, char *argv[]) {
 //     writable = no
 //     guest ok = yes
 
-// How to connect: smb://10.4.66.198/<>
+// How to connect: smb://<ip addr>/<>
 // ex: smb://10.4.66.198/mod4soal3
 // username: etern1ty, password: a
