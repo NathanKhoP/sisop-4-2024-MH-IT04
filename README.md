@@ -13,7 +13,6 @@
 - [Soal 1](#soal-1)
 - [Soal 2](#soal-2)
 - [Soal 3](#soal-3)
-- [Soal 4](#soal-4)
 
 # Soal 1
 
@@ -81,7 +80,12 @@ Untuk [nama_bebas], saya memakai fuse_dir sebagai nama folder.
 > b. Direktori [nama_bebas] adalah direktori FUSE dengan direktori asalnya adalah direktori relics. Ketentuan Direktori [nama_bebas] adalah sebagai berikut:
 >> Ketika dilakukan listing, isi dari direktori [nama_bebas] adalah semua relic dari relics yang telah tergabung.
 
--
+Pertama, agar FUSE sendiri bekerja di fuse_dir, kita memerlukan beberapa fungsi, yaitu:
+- getattr
+- readdir
+- read
+
+Untuk listing, diperlukan 3 fungsi berikut.
 
 >> Ketika dilakukan copy (dari direktori [nama_bebas] ke tujuan manapun), file yang disalin adalah file dari direktori relics yang sudah tergabung.
 
