@@ -1,4 +1,4 @@
-#define FUSE_USE_VERSION 30
+#define FUSE_USE_VERSION 28
 #include <fuse.h>
 #include <stdio.h>
 #include <string.h>
@@ -12,7 +12,7 @@
 #include <ctime>
 #include <algorithm>
 
-const char *mount_path = "/modul4/";
+const char *mount_path = "/modul4/pesan";
 
 void write_log(const char *status, const char *action, const char *details) {
     std::ofstream log_file("logs-fuse.log", std::ios_base::app);
@@ -109,11 +109,11 @@ static int custom_readdir(const char *path, void *buf, fuse_fill_dir_t filler, o
 }
 
 static int custom_open(const char *path, struct fuse_file_info *fi) {
-    if (strncmp(path, "/rahasia-berkas", strlen("/rahasia-berkas")) == 0) {
+    if (strncmp(path, "/modul4/rahasia-berkas", strlen("/modul4/rahasia-berkas")) == 0) {
         std::string password;
         std::cout << "Enter password to access " << path << ": ";
         std::cin >> password;
-        if (password != "password") {
+        if (password != "12345678") {
             write_log("FAILED", "access", path);
             return -EACCES;
         }
