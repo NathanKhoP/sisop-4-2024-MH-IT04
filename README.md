@@ -337,9 +337,7 @@ static int artifact_create(const char *path, mode_t mode, struct fuse_file_info 
 }
 ```
 
-Untuk create,
-
-
+Untuk create (membuat file baru), pertama kita deklarasi path seperti biasa, kemudian kita lakukan create ke full path yang ditambah dengan .000. 
 
 >> File yang dipecah akan memiliki nama [namafile].000 dan seterusnya sesuai dengan jumlah pecahannya.
 Ketika dilakukan penghapusan, maka semua pecahannya juga ikut terhapus.
@@ -375,7 +373,7 @@ static int artifact_unlink(const char *path) {
 }
 ```
 
-Untuk unlink,
+Untuk unlink, setelah deklarasi path, kita membuat beberapa variabel yaitu cur_part, part, dan res. Masuk ke while loop, disetiap iterasi dilakukan unlink (penghapusan) terhadap file yang ditambah dengan `.%03d` yang menunjuk ke cur_part. Iterasi terus dilakukan ulang sampai file yang ditunjuk tidak ada / sudah selesai melakukan unlink terhadap semua part.
 
 Kemudian semua fungsi dimasukkan kedalam struct fuse_operations:
 
@@ -398,6 +396,8 @@ int main(int argc, char *argv[]) {
     return fuse_main(argc, argv, &artifact_oper, NULL);
 }
 ```
+
+`define DEBUG` digunakan untuk memasukkan `#ifdef DEBUG` pada semua fungsi agar mudah mengetahui apa yang terjadi jika dilakukan suatu command sehingga mempermudah proses debugging.
 
 > c. Direktori report adalah direktori yang akan dibagikan menggunakan Samba File Server. Setelah kalian berhasil membuat direktori [nama_bebas], jalankan FUSE dan salin semua isi direktori [nama_bebas] pada direktori report
 
