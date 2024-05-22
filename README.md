@@ -194,9 +194,7 @@ Dilakukan iterasi atas semua entry di dir. Misal nama file yang di read tidak me
 
 >> Ketika dilakukan copy (dari direktori [nama_bebas] ke tujuan manapun), file yang disalin adalah file dari direktori relics yang sudah tergabung.
 
-Untuk melakukan copy, kita memerlukan fungsi lain, yaitu:
-- read
-- truncate
+Untuk melakukan copy, kita memerlukan fungsi lain, yaitu read.
 
 **read**
 
