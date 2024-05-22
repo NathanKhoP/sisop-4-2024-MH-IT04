@@ -421,3 +421,34 @@ Samba conf:
 
 ## Output
 
+**ls**
+
+![output ls](assets/soal3_1.png)
+
+**Copy dari fuse_dir ke luar**
+
+![output ls](assets/soal3_2.png)
+
+**Copy dari luar ke fuse_dir**
+
+![output ls](assets/soal3_3.png)
+
+**Hasil copy dari luar di relics** (ls)
+
+![output ls](assets/soal3_4.png)
+
+**Penghapusan fiile di fuse_dir**
+
+![output ls](assets/soal3_5.png)
+
+**Copy ke report**
+
+![output ls](assets/soal3_6.png)
+
+**Konfigurasi Samba**
+
+![output ls](assets/soal3_7.png)
+
+**Penggunaan folder report/ di Samba**
+
+![output ls](assets/soal3_8.png)
