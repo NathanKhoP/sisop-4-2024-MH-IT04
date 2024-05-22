@@ -188,7 +188,9 @@ static int artifact_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 ```
 
-Untuk readdir,
+Untuk readdir, pertama kita skip `.` dan `..` terlebih dahulu. Kemudian kita opendir ke dirpath, inisialisasi struct st dan set ke 0. 
+
+Dilakukan iterasi atas semua entry di dir. Misal nama file yang di read tidak memiliki `.000`, maka skip sehingga file hanya ada 1 ketika dilakukan `ls`.  Setelah itu, kita rename / menghapus bagian .000 dengan melakukan `'\0'` di relic `(strlen(de->d_name) - 4)`. Iterasi akan terus dilakukan sampai semua entry diproses.
 
 >> Ketika dilakukan copy (dari direktori [nama_bebas] ke tujuan manapun), file yang disalin adalah file dari direktori relics yang sudah tergabung.
 
@@ -244,7 +246,11 @@ static int artifact_read(const char *path, char *buf, size_t size, off_t offset,
 }
 ```
 
-Untuk read,
+Untuk read, setelah deklarasi path, ada loop while yang berjalan selama `size > 0`. Di setiap iterasi yang dilakukan, fungsi membuat part untuk setiap file yang dibaca.
+
+Kemudian kita mendapat part_size melalui seeking ke fp. Misal `offset >= part_size` maka kita skip dan mengurangi offset berdasarkan part_size.
+
+Jika offset lebih kecil dari part_size, maka kita menggeser posisi seek ke offset dan membaca dari buf. File ditutup, dan dilakukan penambahan buf dan read_size dengan read_len, dan juga pengurangan size dengan read_len. Fungsi mengembalikan read_size yaitu jumlah byte yang dibaca.
 
 >> Ketika ada file dibuat, maka pada direktori asal (direktori relics) file tersebut akan dipecah menjadi sejumlah pecahan dengan ukuran maksimum tiap pecahan adalah 10kb.
 
@@ -301,7 +307,15 @@ static int artifact_write(const char *path, const char *buf, size_t size, off_t 
 }
 ```
 
-Untuk write,
+Untuk write, seperti biasa ada deklarasi path. Setelah itu, kita membuat beberapa variabel seperti cur_part, part_offset, part, dan write_size_total. 
+
+Masuk ke fungsi while yang akan berjalan selama `size > 0`, di setiap iterasi, part = path ke bagian file yang akan diwrite (menggunakan r+b untuk read + write, wb = write). Kemudian, kita seek berdasarkan part_offset, dan menentukan write_size dengan cara:
+- Misal `size > (PART_SIZE - part_offset))`  dimana `(PART_SIZE - part_offset))` adalah ruang yang tersisa dalam part file, `write_size = (PART_SIZE - part_offset))` atau ruang yang tersisa.
+- Jika kondisi diatas tidak terpenuhi, maka `write_size = size`.
+
+Setelah itu kita write data dari buf, melakukan penambahan buf dan write_size_total dengan write_size, melakukan pengurangan size dengan write_size, dan terakhir reset part_offset.
+
+Fungsi mengembalikan write_size_total yaitu jumlah byte yang telah ditulis.
 
 **create**
 
@@ -324,6 +338,8 @@ static int artifact_create(const char *path, mode_t mode, struct fuse_file_info 
 ```
 
 Untuk create,
+
+
 
 >> File yang dipecah akan memiliki nama [namafile].000 dan seterusnya sesuai dengan jumlah pecahannya.
 Ketika dilakukan penghapusan, maka semua pecahannya juga ikut terhapus.
@@ -371,7 +387,6 @@ static struct fuse_operations artifact_oper = {
     .write = artifact_write,
     .unlink = artifact_unlink,
     .create = artifact_create,
-    .truncate = artifact_truncate,
 };
 ```
 
