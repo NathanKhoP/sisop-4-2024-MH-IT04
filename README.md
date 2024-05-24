@@ -20,13 +20,11 @@
 
 ## Deskripsi Soal
 
-### Catatan
+Adfi merupakan seorang CEO agency creative bernama Ini Karya Kita. Ia sedang melakukan inovasi pada manajemen project photography Ini Karya Kita. Salah satu ide yang dia kembangkan adalah tentang pengelolaan foto project dalam sistem arsip Ini Karya Kita. Dalam membangun sistem ini, Adfi tidak bisa melakukannya sendirian, dia perlu bantuan mahasiswa Departemen Teknologi Informasi angkatan 2023 untuk membahas konsep baru yang akan mengubah project fotografinya lebih menarik untuk dilihat. Adfi telah menyiapkan portofolio hasil project fotonya yang bisa didownload dan diakses di www.inikaryakita.id . Silahkan eksplorasi web Ini Karya Kita dan temukan halaman untuk bisa mendownload projectnya. Setelah kalian download terdapat folder gallery dan bahaya.
 
 ## Pengerjaan
 
-Berikut adalah dokumentasi kode dalam format Markdown, dengan penjelasan pada setiap blok kode yang relevan. Kode akan dikelompokkan sesuai dengan fungsinya.
-
-# Virtual File System dengan FUSE
+## Virtual File System dengan FUSE
 
 Kode ini merupakan implementasi dari sebuah virtual file system menggunakan FUSE (Filesystem in Userspace). Fungsi-fungsi yang diimplementasikan meliputi operasi file dasar seperti membaca, menulis, membuat direktori, menghapus file, dan lain-lain.
 
@@ -243,7 +241,7 @@ static int hello_read(const char* path, char* buf, size_t size, off_t offset, st
 
 Fungsi `hello_read` digunakan untuk membaca isi dari sebuah file dalam file system virtual. Fungsi ini membuka file menggunakan `open` pada `fpath`, yang merupakan gabungan dari `dirpath` dan `path` (path relatif dalam file system virtual). Kemudian, menggunakan `pread` untuk membaca isi file ke dalam buffer sementara `temp_buf`.
 
-Jika path file dimulai dengan `/bahaya/test-`, maka isi file akan dibalik urutannya sebelum disalin ke buffer `buf` yang diberikan sebagai argumen. Jika tidak, isi file akan disalin secara langsung ke buffer `buf`.
+Jika path file dimulai dengan `/bahaya/test`, maka isi file akan dibalik urutannya sebelum disalin ke buffer `buf` yang diberikan sebagai argumen. Jika tidak, isi file akan disalin secara langsung ke buffer `buf`.
 
 ### Mengubah Hak Akses File/Direktori
 
@@ -369,6 +367,10 @@ int main(int argc, char* argv[]) {
 Fungsi `main` merupakan titik masuk utama dari program ini. Fungsi ini memanggil `fuse_main` dengan argumen `hello_oper` (struktur operasi FUSE yang telah didefinisikan sebelumnya) dan `argc` serta `argv` yang diteruskan dari baris perintah. `umask(0)` digunakan untuk memastikan bahwa tidak ada pembatasan hak akses default yang diterapkan pada file atau direktori yang dibuat.
 
 ## Output
+
+![image setelah watermark](assets/soal1_1.png)
+![setelah reverse](assets/soal1_2.png)
+![setelah menjalankan script.sh](assets/soal1_3.png)
 
 # Soal 2
 
@@ -537,14 +539,13 @@ static int artifact_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 ```
 
-Untuk readdir,
+Untuk readdir, pertama kita skip `.` dan `..` terlebih dahulu. Kemudian kita opendir ke dirpath, inisialisasi struct st dan set ke 0.
+
+Dilakukan iterasi atas semua entry di dir. Misal nama file yang di read tidak memiliki `.000`, maka skip sehingga file hanya ada 1 ketika dilakukan `ls`. Setelah itu, kita rename / menghapus bagian .000 dengan melakukan `'\0'` di relic `(strlen(de->d_name) - 4)`. Iterasi akan terus dilakukan sampai semua entry diproses.
 
 > > Ketika dilakukan copy (dari direktori [nama_bebas] ke tujuan manapun), file yang disalin adalah file dari direktori relics yang sudah tergabung.
 
-Untuk melakukan copy, kita memerlukan fungsi lain, yaitu:
-
-- read
-- truncate
+Untuk melakukan copy, kita memerlukan fungsi lain, yaitu read.
 
 **read**
 
@@ -594,7 +595,11 @@ static int artifact_read(const char *path, char *buf, size_t size, off_t offset,
 }
 ```
 
-Untuk read,
+Untuk read, setelah deklarasi path, ada loop while yang berjalan selama `size > 0`. Di setiap iterasi yang dilakukan, fungsi membuat part untuk setiap file yang dibaca.
+
+Kemudian kita mendapat part_size melalui seeking ke fp. Misal `offset >= part_size` maka kita skip dan mengurangi offset berdasarkan part_size.
+
+Jika offset lebih kecil dari part_size, maka kita menggeser posisi seek ke offset dan membaca dari buf. File ditutup, dan dilakukan penambahan buf dan read_size dengan read_len, dan juga pengurangan size dengan read_len. Fungsi mengembalikan read_size yaitu jumlah byte yang dibaca.
 
 > > Ketika ada file dibuat, maka pada direktori asal (direktori relics) file tersebut akan dipecah menjadi sejumlah pecahan dengan ukuran maksimum tiap pecahan adalah 10kb.
 
@@ -652,7 +657,16 @@ static int artifact_write(const char *path, const char *buf, size_t size, off_t 
 }
 ```
 
-Untuk write,
+Untuk write, seperti biasa ada deklarasi path. Setelah itu, kita membuat beberapa variabel seperti cur_part, part_offset, part, dan write_size_total.
+
+Masuk ke fungsi while yang akan berjalan selama `size > 0`, di setiap iterasi, part = path ke bagian file yang akan diwrite (menggunakan r+b untuk read + write, wb = write). Kemudian, kita seek berdasarkan part_offset, dan menentukan write_size dengan cara:
+
+- Misal `size > (PART_SIZE - part_offset))` dimana `(PART_SIZE - part_offset))` adalah ruang yang tersisa dalam part file, `write_size = (PART_SIZE - part_offset))` atau ruang yang tersisa.
+- Jika kondisi diatas tidak terpenuhi, maka `write_size = size`.
+
+Setelah itu kita write data dari buf, melakukan penambahan buf dan write_size_total dengan write_size, melakukan pengurangan size dengan write_size, dan terakhir reset part_offset.
+
+Fungsi mengembalikan write_size_total yaitu jumlah byte yang telah ditulis.
 
 **create**
 
@@ -674,7 +688,7 @@ static int artifact_create(const char *path, mode_t mode, struct fuse_file_info 
 }
 ```
 
-Untuk create,
+Untuk create (membuat file baru), pertama kita deklarasi path seperti biasa, kemudian kita lakukan create ke full path yang ditambah dengan .000.
 
 > > File yang dipecah akan memiliki nama [namafile].000 dan seterusnya sesuai dengan jumlah pecahannya.
 > > Ketika dilakukan penghapusan, maka semua pecahannya juga ikut terhapus.
@@ -710,7 +724,7 @@ static int artifact_unlink(const char *path) {
 }
 ```
 
-Untuk unlink,
+Untuk unlink, setelah deklarasi path, kita membuat beberapa variabel yaitu cur_part, part, dan res. Masuk ke while loop, disetiap iterasi dilakukan unlink (penghapusan) terhadap file yang ditambah dengan `.%03d` yang menunjuk ke cur_part. Iterasi terus dilakukan ulang sampai file yang ditunjuk tidak ada / sudah selesai melakukan unlink terhadap semua part.
 
 Kemudian semua fungsi dimasukkan kedalam struct fuse_operations:
 
@@ -722,7 +736,6 @@ static struct fuse_operations artifact_oper = {
     .write = artifact_write,
     .unlink = artifact_unlink,
     .create = artifact_create,
-    .truncate = artifact_truncate,
 };
 ```
 
@@ -734,6 +747,8 @@ int main(int argc, char *argv[]) {
     return fuse_main(argc, argv, &artifact_oper, NULL);
 }
 ```
+
+`define DEBUG` digunakan untuk memasukkan `#ifdef DEBUG` pada semua fungsi agar mudah mengetahui apa yang terjadi jika dilakukan suatu command sehingga mempermudah proses debugging.
 
 > c. Direktori report adalah direktori yang akan dibagikan menggunakan Samba File Server. Setelah kalian berhasil membuat direktori [nama_bebas], jalankan FUSE dan salin semua isi direktori [nama_bebas] pada direktori report
 
@@ -756,3 +771,35 @@ Samba conf:
 5. Masuk dengan username etern1ty, password a
 
 ## Output
+
+**ls**
+
+![output ls](assets/soal3_1.png)
+
+**Copy dari fuse_dir ke luar**
+
+![output ls](assets/soal3_2.png)
+
+**Copy dari luar ke fuse_dir**
+
+![output ls](assets/soal3_3.png)
+
+**Hasil copy dari luar di relics** (ls)
+
+![output ls](assets/soal3_4.png)
+
+**Penghapusan fiile di fuse_dir**
+
+![output ls](assets/soal3_5.png)
+
+**Copy ke report**
+
+![output ls](assets/soal3_6.png)
+
+**Konfigurasi Samba**
+
+![output ls](assets/soal3_7.png)
+
+**Penggunaan folder report/ di Samba**
+
+![output ls](assets/soal3_8.png)
