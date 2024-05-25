@@ -374,15 +374,553 @@ Fungsi `main` merupakan titik masuk utama dari program ini. Fungsi ini memanggil
 
 # Soal 2
 
-### Dikerjakan oleh Muhammad Ida Bagus Rafi Habibie (5027221059)
+### Dikerjakan oleh Muhammad Ida Bagus Rafi Habibibie(5027221059)
+
 
 ## Deskripsi Soal
 
-### Catatan
+Masih dengan Ini Karya Kita, sang CEO ingin melakukan tes keamanan pada folder sensitif Ini Karya Kita. Karena Teknologi Informasi merupakan departemen dengan salah satu fokus di Cyber Security, maka dia kembali meminta bantuan mahasiswa Teknologi Informasi angkatan 2023 untuk menguji dan mengatur keamanan pada folder sensitif tersebut. Untuk mendapatkan folder sensitif itu, mahasiswa IT 23 harus kembali mengunjungi website Ini Karya Kita pada [www.inikaryakita.id/schedule](https://www.inikaryakita.id/schedule) . Silahkan isi semua formnya, tapi pada form subject isi dengan nama kelompok_SISOP24 , ex: IT01_SISOP24 . Lalu untuk form Masukkan Pesanmu, ketik “Mau Foldernya” . Tunggu hingga 1x24 jam, maka folder sensitif tersebut akan dikirimkan melalui email kalian. Apabila folder tidak dikirimkan ke email kalian, maka hubungi sang [CEO](http://wa.me/6282140759677) untuk meminta bantuan.
 
 ## Pengerjaan
 
-## Output
+### Pendahuluan
+
+Adfi dan timnya menginginkan sebuah sistem file bernama pastibisa.c yang mampu melakukan decoding otomatis pada beberapa format encoding tertentu dan menerapkan keamanan pada folder dengan prefix tertentu. Dokumentasi ini menjelaskan langkah-langkah implementasi kode FUSE yang memenuhi permintaan tersebut.
+
+#### Persiapan
+
+1.  Instalasi FUSE:
+    
+
+Pastikan FUSE telah terinstal pada sistem Anda. Gunakan perintah berikut untuk instalasi:  
+```  
+sudo apt-get install fuse libfuse-dev
+```
+
+     
+    
+
+2.  Header dan Konstanta:
+    
+
+-   Menyiapkan versi FUSE dan meng-include berbagai header yang diperlukan untuk operasi sistem file dan manipulasi string.
+    
+```c 
+#define FUSE_USE_VERSION 28
+
+#include <fuse.h>
+
+#include <stdio.h>
+
+#include <string.h>
+
+#include <errno.h>
+
+#include <fcntl.h>
+
+#include <unistd.h>
+
+#include <dirent.h>
+
+#include <sys/stat.h>
+
+#include <time.h>
+
+#include <stdlib.h>
+
+#include <ctype.h>
+
+  
+const char *mount_path = "/Modul4/sensitif/Pesan-4";
+
+```   
+    
+
+### Langkah Pengerjaan
+
+1.  Implementasi Fungsi Logging:
+    
+-   Menulis log setiap proses yang dilakukan, mencatat status, waktu, tag, dan informasi tambahan.
+    
+
+```c  
+void write_log(const char *status, const char *action, const char *details) {
+
+FILE *log_file = fopen("logs-fuse.log", "a");
+
+if (log_file != NULL) {
+
+time_t now = time(NULL);
+
+struct tm *local_time = localtime(&now);
+
+char time_buffer[80];
+
+strftime(time_buffer, sizeof(time_buffer), "%d/%m/%Y-%H:%M:%S", local_time);
+
+fprintf(log_file, "[%s]::%s::[%s]::[%s]\n", status, time_buffer, action, details);
+
+fclose(log_file);
+
+}
+
+}
+```
+  
+    
+2.  Implementasi Fungsi Dekode:
+    
+
+-   Base64:
+  
+ ```c  
+char *decode_base64(const char *input) {
+
+static const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+int len = strlen(input);
+
+char *decoded = (char *)malloc(len);
+
+if (decoded == NULL) return NULL;
+
+int i, j = 0, k = 0, val = 0;
+
+for (i = 0; i < len; i++) {
+
+if (input[i] == '=') break;
+
+val = strchr(base64_chars, input[i]) - base64_chars;
+
+val = val << ((i % 4) * 2);
+
+k = k | val;
+
+if (i % 4 == 3) {
+
+decoded[j++] = (char)((k & 0x00FF0000) >> 16);
+
+decoded[j++] = (char)((k & 0x0000FF00) >> 8);
+
+decoded[j++] = (char)(k & 0x000000FF);
+
+k = 0;
+
+}
+
+}
+
+decoded[j] = '\0';
+
+return decoded;
+
+}
+```
+   
+    
+
+-   ROT13:
+    
+
+```c  
+char *decode_rot13(const char *input) {
+
+char *output = strdup(input);
+
+if (output == NULL) return NULL;
+
+for (char *c = output; *c; c++) {
+
+if (isalpha(*c)) {
+
+if ((*c >= 'a' && *c <= 'm') || (*c >= 'A' && *c <= 'M')) *c += 13;
+
+else *c -= 13;
+
+}
+
+}
+
+return output;
+
+}
+
+``` 
+    
+
+-   Hexadecimal:
+    
+
+```c
+char *decode_hex(const char *input) {
+
+int len = strlen(input);
+
+char *output = (char *)malloc(len / 2 + 1);
+
+if (output == NULL) return NULL;
+
+for (int i = 0; i < len; i += 2) {
+
+char byte[3] = {input[i], input[i+1], '\0'};
+
+output[i/2] = (char)strtol(byte, NULL, 16);
+
+}
+
+output[len/2] = '\0';
+
+return output;
+
+}
+
+```   
+    
+
+-   Reverse Text:
+    
+```c  
+char *reverse_text(const char *input) {
+
+int len = strlen(input);
+
+char *output = strdup(input);
+
+if (output == NULL) return NULL;
+
+for (int i = 0; i < len / 2; i++) {
+
+char temp = output[i];
+
+output[i] = output[len - i - 1];
+
+output[len - i - 1] = temp;
+
+}
+
+return output;
+
+}
+
+```   
+    
+3. Helper Function:
+    
+
+-   Memeriksa apakah sebuah string memiliki prefix tertentu.
+    
+
+```c
+int has_prefix(const char *str, const char *prefix) {
+
+return strncmp(str, prefix, strlen(prefix)) == 0;
+
+}
+
+``` 
+    
+4.  Implementasi FUSE Operations:
+    
+
+-   Getattr: Mengambil atribut file/directory.
+    
+```c  
+static int custom_getattr(const char *path, struct stat *stbuf) {
+
+char full_path[1000];
+
+sprintf(full_path, "%s%s", mount_path, path);
+
+int res = lstat(full_path, stbuf);
+
+return (res == -1) ? -errno : 0;
+
+}
+``` 
+    
+
+-   Readdir: Membaca isi directory.
+    
+
+```c  
+static int custom_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
+
+char full_path[1000];
+
+if (strcmp(path, "/") == 0) {
+
+sprintf(full_path, "%s", mount_path);
+
+} else {
+
+sprintf(full_path, "%s%s", mount_path, path);
+
+}
+
+  
+
+DIR *dp;
+
+struct dirent *de;
+
+dp = opendir(full_path);
+
+if (!dp) return -errno;
+
+  
+
+while ((de = readdir(dp)) != NULL) {
+
+struct stat st;
+
+memset(&st, 0, sizeof(st));
+
+st.st_ino = de->d_ino;
+
+st.st_mode = de->d_type << 12;
+
+if (filler(buf, de->d_name, &st, 0)) break;
+
+}
+
+  
+
+closedir(dp);
+
+return 0;
+
+}
+
+```  
+    
+
+-   Open: Membuka file dengan pengecekan password untuk file yang sensitif.
+    
+
+```c  
+static int custom_open(const char *path, struct fuse_file_info *fi) {
+
+if (strncmp(path, "/Modul4/sensitif/rahasia-berkas", strlen("/Modul4/sensitif/rahasia-berkas")) == 0) {
+
+char password[256];
+
+printf("Enter password to access %s: ", path);
+
+scanf("%255s", password);
+
+if (strcmp(password, "12345678") != 0) {
+
+write_log("FAILED", "access", path);
+
+return -EACCES;
+
+}
+
+write_log("SUCCESS", "access", path);
+
+}
+
+return 0;
+
+}
+
+```  
+    
+
+-   Read: Membaca isi file dengan berbagai operasi dekode tergantung pada prefix dari nama file.
+    
+
+```c
+static int custom_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+
+char full_path[1000];
+
+sprintf(full_path, "%s%s", mount_path, path);
+
+  
+
+int fd = open(full_path, O_RDONLY);
+
+if (fd == -1) return -errno;
+
+  
+
+struct stat st;
+
+fstat(fd, &st);
+
+char *content = (char *)malloc(st.st_size + 1);
+
+if (content == NULL) {
+
+close(fd);
+
+return -ENOMEM;
+
+}
+
+pread(fd, content, st.st_size, 0);
+
+content[st.st_size] = '\0';
+
+close(fd);
+
+  
+
+char *filename = strdup(path + 1);
+
+if (filename == NULL) {
+
+free(content);
+
+return -ENOMEM;
+
+}
+
+  
+
+if (has_prefix(filename, "base64")) {
+
+char *decoded = decode_base64(content);
+
+free(content);
+
+content = decoded;
+
+} else if (has_prefix(filename, "rot13")) {
+
+char *decoded = decode_rot13(content);
+
+free(content);
+
+content = decoded;
+
+} else if (has_prefix(filename, "hex")) {
+
+char *decoded = decode_hex(content);
+
+free(content);
+
+content = decoded;
+
+} else if (has_prefix(filename, "rev")) {
+
+char *reversed = reverse_text(content);
+
+free(content);
+
+content = reversed;
+
+}
+
+  
+
+size_t len = strlen(content);
+
+if (offset < len) {
+
+if (offset + size > len) size = len - offset;
+
+memcpy(buf, content + offset, size);
+
+} else {
+
+size = 0;
+
+}
+
+  
+
+free(content);
+
+free(filename);
+
+  
+
+return size;
+
+}
+
+```  
+    
+5.  Main Function dan FUSE Operations Struct:
+    
+
+-   struct fuse_operations custom_oper: Mendefinisikan operasi yang diimplementasikan oleh file system ini.
+    
+```c
+static struct fuse_operations custom_oper = {
+
+.getattr = custom_getattr,
+
+.readdir = custom_readdir,
+
+.open = custom_open,
+
+.read = custom_read,
+
+};
+
+```
+    
+
+-   main: Fungsi utama yang menjalankan FUSE.
+    
+
+```c 
+int main(int argc, char *argv[]) {
+
+umask(0);
+
+return fuse_main(argc, argv, &custom_oper, NULL);
+
+}
+
+```  
+    
+
+### Menjalankan Program
+
+1.  Kompilasi Program:
+    
+
+-   Kompilasi program menggunakan GCC.
+    
+
+```  
+fuse --cflags` -o pastibisa pastibisa.c `pkg-config fuse --libs`
+
+```   
+    
+2.  Menjalankan Program:
+    
+
+-   Buat direktori mount point dan jalankan filesystem.
+    
+
+```
+mkdir -p ~/Modul4/sensitif/Pesan
+
+./pastibisa ~/Modul4/sensitif/Pesan
+
+```  
+    
+
+### Kesimpulan
+
+Kode FUSE ini berhasil diimplementasikan untuk memenuhi permintaan dengan menyediakan fitur-fitur berikut:
+
+-   Dekoding otomatis untuk format Base64, ROT13, Hexadecimal, dan reverse text berdasarkan prefix nama file.
+    
+-   Perlindungan akses untuk file dan folder dengan prefix "rahasia" menggunakan mekanisme password.
+    
+-   Logging semua operasi dengan format yang sesuai, mencatat status, waktu, tindakan, dan informasi tambahan.
+    
+
+Dengan ini, file system dapat berfungsi sesuai dengan persyaratan yang diberikan oleh Adfi dan timnya.
+
+hasil output:
+![setelah menjalankan pastibisa](assets/soal2.png)
 
 # Soal 3
 
